@@ -1,97 +1,47 @@
 import React from 'react';
-import { StyleSheet, Text, View, Image, TextInput, TouchableOpacity } from 'react-native';
-import axios from 'axios';
-import { ScrollView } from 'react-native-gesture-handler';
-import { Constants } from 'expo';
+import { createStackNavigator, createAppContainer } from "react-navigation";
+import HomeScreen from './src/screens/Home'
+import ShowScreen from './src/screens/Show'
+import { Provider, connect } from 'react-redux'
+import { createStore } from 'redux'
 
-export default class App extends React.Component {
-  render() {
-    return (
-      <ScrollView>
-        <View style={styles.container} >
-          <ComponentFilms />
-        </View>
-      </ScrollView>
-    );
+const initialState = {
+  shows: []
+}
+
+const reducer = (state = initialState, action) => {
+  switch (action.type) {
+    case `SET_SHOWS`: {
+      return {
+        ...state,
+        shows: action.shows
+      }
+    } 
+    default: 
+      return state
   }
 }
 
-class ComponentFilms extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { shows: [], text: '' }
-  }
+const store = createStore(reducer);
 
-  componentDidMount() {
-    axios.get('http://api.tvmaze.com/search/shows?q=')
-      .then((res) => {
-        console.log(res.data)
-        this.setState({ shows: res.data })
-      })
-      .catch((error) => {
-        console.log(error)
-      })
-  }
-
-  search (input) {
-    this.setState({text: input})
-    axios.get(`http://api.tvmaze.com/search/shows?q=${input}`)
-    .then((res) => {
-      console.log(`${this.state.text} --- ${res.data}`)
-      this.setState({ shows: res.data })
-    })
-    .catch((error) => {
-      console.log(error)
-    })
-  }
-
-  render() {
-    return (
-      <View style={{ flex: 1 }}>
-
-          <TextInput
-            style={{height: 40, width: 240, borderColor: 'black', borderWidth: 1, marginTop: 15, borderRadius: 5, textAlign: "center", alignSelf: "center"}}
-            onChangeText={(text) => {
-              this.search(text)
-            }}
-            value={this.state.text}
-          />
-
-        {
-          this.state.shows.map(titre => {
-            return (
-              <View style={ styles.bloc } key={titre.show.id}>
-                <Text style={{ fontWeight: 'bold'}}>{titre.show.name}</Text>
-                <Text>{`score: ${titre.score}`}</Text>
-                <Text>
-                  {
-                    titre.show.genres.map(genre => {
-                      return genre+'  '
-                    })
-                  }
-                </Text>
-                { titre.show.image && titre.show.image.medium ? <Image source={{ uri: titre.show.image.medium}} style={{width: 50, height: 80}}/> : null }
-              </View>
-            )
-          })
-        }
-      </View>
-    )
-  }
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    paddingTop: Constants.statusBarHeight
+const AppNavigator = createStackNavigator({
+  Home: {
+    screen: HomeScreen
   },
-  bloc: {
-    margin: 10, 
-    padding: 10, 
-    backgroundColor: 'lightgray', 
-    borderRadius: 5,
-    alignItems: "center",
-    flex: 1
+  Show: {
+    screen: ShowScreen
   }
-});
+}, {
+  initialRouteName: 'Home',
+  headerMode: 'none',
+})
+
+const AppContainer = createAppContainer(AppNavigator);
+
+export default () => {
+  return (
+    <Provider store={store}>
+      <AppContainer />
+    </Provider>
+  )
+};
